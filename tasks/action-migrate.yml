@@ -1,4 +1,8 @@
 ---
+- when: setup_postgres == True
+  include: postgres-facts.yml
+
+- include: project.yml
 
 - name: migrate database
   command: bash -lc "mix ecto.migrate" chdir="{{ project_path }}"
