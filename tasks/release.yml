@@ -1,20 +1,8 @@
 ---
 - when: deploy_type == "restart"
-  name: stop app
-  monit: name="{{ app_name }}" state=stopped
-
-
-- when: deploy_type == "restart"
   name: delete release
   command: bash -lc "mix release.clean" chdir="{{ project_path }}"
   remote_user: "{{ deployer }}"
-
-
-- name: get app version
-  command: bash -lc "mix run -e 'IO.puts \"RELEASE_VERSION=\" <> Mix.Project.config[:version]' | grep RELEASE_VERSION | sed 's/RELEASE_VERSION=//'" chdir="{{ project_path }}"
-  remote_user: "{{ deployer }}"
-  register: app_version_result
-- set_fact: app_version="{{ app_version_result.stdout }}"
 
 
 - name: "create release"
@@ -23,6 +11,20 @@
   environment:
     MIX_ENV: "{{ mix_env }}"
     PORT: "{{ app_port }}"
+
+
+- name: get app version
+  command: bash -lc "mix run -e 'IO.puts \"RELEASE_VERSION=\" <> Mix.Project.config[:version]' | grep RELEASE_VERSION | sed 's/RELEASE_VERSION=//'" chdir="{{ project_path }}"
+  remote_user: "{{ deployer }}"
+  register: app_version_result
+  environment:
+    MIX_ENV: "{{ mix_env }}"
+- set_fact: app_version="{{ app_version_result.stdout }}"
+
+
+- when: deploy_type == "restart"
+  name: stop app
+  monit: name="{{ app_name }}" state=stopped
 
 
 - name: "extract release in running app dir"
